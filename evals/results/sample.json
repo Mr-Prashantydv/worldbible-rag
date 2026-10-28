@@ -1,0 +1,81 @@
+{
+ "cases": 15,
+ "modes": {
+  "vector": {
+   "hit@1": 0.6666666666666666,
+   "hit@3": 0.8666666666666667,
+   "hit@5": 0.9333333333333333,
+   "mrr": 0.7833333333333333,
+   "misses@5": [
+    "asha-phone"
+   ],
+   "ranks": {
+    "bolt-collar": 1,
+    "bolt-speaks": 1,
+    "bolt-danger": 1,
+    "asha-hand": 1,
+    "asha-parents": 1,
+    "asha-phone": 6,
+    "asha-crying": 4,
+    "ravi-flying": 3,
+    "ravi-wins": 2,
+    "hill-wind": 1,
+    "hill-tree": 1,
+    "shed-radio": 2,
+    "shed-layout": 1,
+    "kite-ribbons": 1,
+    "kite-torn": 1
+   }
+  },
+  "keyword": {
+   "hit@1": 0.6,
+   "hit@3": 0.8,
+   "hit@5": 0.9333333333333333,
+   "mrr": 0.7266666666666667,
+   "misses@5": [
+    "asha-parents"
+   ],
+   "ranks": {
+    "bolt-collar": 5,
+    "bolt-speaks": 1,
+    "bolt-danger": 2,
+    "asha-hand": 1,
+    "asha-parents": null,
+    "asha-phone": 1,
+    "asha-crying": 2,
+    "ravi-flying": 5,
+    "ravi-wins": 1,
+    "hill-wind": 1,
+    "hill-tree": 1,
+    "shed-radio": 1,
+    "shed-layout": 2,
+    "kite-ribbons": 1,
+    "kite-torn": 1
+   }
+  },
+  "hybrid": {
+   "hit@1": 0.6,
+   "hit@3": 1.0,
+   "hit@5": 1.0,
+   "mrr": 0.788888888888889,
+   "misses@5": [],
+   "ranks": {
+    "bolt-collar": 2,
+    "bolt-speaks": 1,
+    "bolt-danger": 1,
+    "asha-hand": 1,
+    "asha-parents": 3,
+    "asha-phone": 2,
+    "asha-crying": 1,
+    "ravi-flying": 2,
+    "ravi-wins": 2,
+    "hill-wind": 1,
+    "hill-tree": 1,
+    "shed-radio": 2,
+    "shed-layout": 1,
+    "kite-ribbons": 1,
+    "kite-torn": 1
+   }
+  }
+ }
+}
