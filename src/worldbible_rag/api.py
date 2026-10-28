@@ -13,7 +13,7 @@ from typing import Callable
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from .answer import Answerer
+from .answer import Answerer, AnswerUnavailable
 from .config import Settings
 from .embed import FastEmbedder
 from .index import Index
@@ -83,12 +83,12 @@ def create_app(
     @app.post("/ask", response_model=AskResponse)
     def ask(req: AskRequest) -> AskResponse:
         hits = state["retriever"].search(req.question, k=req.k, mode=req.mode)
-        if "answerer" not in state:
-            try:
+        try:
+            if "answerer" not in state:
                 state["answerer"] = make_answerer()
-            except Exception as exc:  # usually a missing API key
-                raise HTTPException(status_code=503, detail=f"Answering is unavailable: {exc}") from exc
-        result = state["answerer"].answer(req.question, hits)
+            result = state["answerer"].answer(req.question, hits)
+        except AnswerUnavailable as exc:
+            raise HTTPException(status_code=503, detail=f"Answering is unavailable: {exc}") from exc
         by_id = {p.id: p for p in passages(hits)}
         return AskResponse(
             answer=result.answer,

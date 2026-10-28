@@ -1,9 +1,11 @@
 from types import SimpleNamespace
 
+import anthropic
+import httpx2 as httpx  # the anthropic SDK is built on httpx2, not httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from worldbible_rag.answer import Answerer, GroundedAnswer, build_prompt
+from worldbible_rag.answer import Answerer, AnswerUnavailable, GroundedAnswer, build_prompt
 from worldbible_rag.api import create_app
 
 
@@ -109,11 +111,23 @@ def test_ask_endpoint_returns_cited_passages(client):
     assert body["citations"][0]["id"].startswith("red-kite#")
 
 
-def test_ask_without_an_api_key_returns_503(retriever):
-    def broken():
-        raise RuntimeError("no API key")
-
-    with TestClient(create_app(lambda: retriever, broken)) as c:
+def test_ask_without_credentials_returns_503(retriever, monkeypatch, tmp_path):
+    # A real SDK client with no credentials (and an empty config dir, so a profile
+    # on the developer's machine is never used): it fails when the request is sent.
+    for var in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_PROFILE"):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("ANTHROPIC_CONFIG_DIR", str(tmp_path))
+    with TestClient(create_app(lambda: retriever, Answerer)) as c:
         response = c.post("/ask", json={"question": "Who is Bolt?"})
     assert response.status_code == 503
-    assert "no API key" in response.json()["detail"]
+    assert "ANTHROPIC_API_KEY" in response.json()["detail"]
+
+
+def test_api_errors_become_answer_unavailable(retriever):
+    class Failing:
+        def parse(self, **kwargs):
+            raise anthropic.APIConnectionError(request=httpx.Request("POST", "https://api.anthropic.com"))
+
+    answerer = Answerer(client=SimpleNamespace(beta=SimpleNamespace(messages=Failing())))
+    with pytest.raises(AnswerUnavailable, match="Could not reach"):
+        answerer.answer("q", retriever.search("Bolt", k=1))

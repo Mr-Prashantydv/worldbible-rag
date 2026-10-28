@@ -26,6 +26,10 @@ SYSTEM = """You answer questions about a story world, using only the passages fr
 - Keep the answer to one to three sentences."""
 
 
+class AnswerUnavailable(RuntimeError):
+    """Claude could not be reached: no credentials, network failure or an API error."""
+
+
 class GroundedAnswer(BaseModel):
     answer: str = Field(description="The answer, in one to three sentences.")
     citations: list[str] = Field(description="Ids of the passages the answer is based on.")
@@ -56,8 +60,13 @@ def check_citations(parsed: GroundedAnswer, hits: list[Hit]) -> tuple[list[str],
 
 class Answerer:
     def __init__(self, client: anthropic.Anthropic | None = None, model: str = DEFAULT_MODEL, effort: str = "medium"):
-        # Anthropic() reads ANTHROPIC_API_KEY (or an `ant auth login` profile).
-        self.client = client or anthropic.Anthropic()
+        if client is None:
+            # Anthropic() reads ANTHROPIC_API_KEY (or an `ant auth login` profile).
+            try:
+                client = anthropic.Anthropic()
+            except anthropic.CredentialsError as exc:
+                raise AnswerUnavailable(f"Anthropic credentials could not be loaded ({exc}); set ANTHROPIC_API_KEY.") from exc
+        self.client = client
         self.model = model
         self.effort = effort
 
@@ -65,17 +74,29 @@ class Answerer:
         if not hits:
             return AnswerResult("The world bible has nothing that matches this question.", [], False, self.model)
 
-        response = self.client.beta.messages.parse(
-            model=self.model,
-            max_tokens=16000,
-            # If a safety classifier declines, the API re-runs the request on a fallback model.
-            betas=["server-side-fallback-2026-07-01"],
-            fallbacks="default",
-            output_config={"effort": self.effort},
-            system=SYSTEM,
-            messages=[{"role": "user", "content": build_prompt(question, hits)}],
-            output_format=GroundedAnswer,
-        )
+        try:
+            response = self.client.beta.messages.parse(
+                model=self.model,
+                max_tokens=16000,
+                # If a safety classifier declines, the API re-runs the request on a fallback model.
+                betas=["server-side-fallback-2026-07-01"],
+                fallbacks="default",
+                output_config={"effort": self.effort},
+                system=SYSTEM,
+                messages=[{"role": "user", "content": build_prompt(question, hits)}],
+                output_format=GroundedAnswer,
+            )
+        except anthropic.APIStatusError as exc:
+            raise AnswerUnavailable(f"Claude API returned {exc.status_code}: {exc.message}") from exc
+        except anthropic.APIConnectionError as exc:
+            raise AnswerUnavailable("Could not reach the Claude API.") from exc
+        except anthropic.CredentialsError as exc:
+            raise AnswerUnavailable(f"Anthropic credentials could not be loaded ({exc}); set ANTHROPIC_API_KEY.") from exc
+        except TypeError as exc:
+            # The SDK raises TypeError at request time when no credentials are configured.
+            if "authentication" not in str(exc):
+                raise
+            raise AnswerUnavailable("No Anthropic credentials: set ANTHROPIC_API_KEY.") from exc
 
         if response.stop_reason == "refusal" or response.parsed_output is None:
             return AnswerResult("The model declined to answer this question.", [], False, response.model, refused=True)
