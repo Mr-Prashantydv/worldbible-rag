@@ -16,6 +16,7 @@ import yaml
 
 FRONT_MATTER = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 WIKILINK = re.compile(r"\[\[([a-z0-9-]+)\]\]")
+ONE_LINE = re.compile(r"\*\*One line:\*\*\s*(.+)")
 # Sections longer than this are split again on paragraph breaks, so one long
 # section does not crowd every other result out of the context window.
 MAX_CHUNK_WORDS = 220
@@ -82,6 +83,12 @@ def parse_record(path: Path, root: Path) -> list[Chunk]:
             lines.append(line)
     sections.append((heading, "\n".join(lines)))
 
+    # A section like "Director rules" rarely names whose rules they are. Repeating
+    # the record's one-line summary in every section gives each chunk that context
+    # (measured in evals/: it lifted MRR for every search mode).
+    one_line = ONE_LINE.search(sections[0][1])
+    context = f"About {title}: {WIKILINK.sub(lambda m: m.group(1).replace('-', ' '), one_line.group(1).strip())}" if one_line else ""
+
     chunks: list[Chunk] = []
     seen: dict[str, int] = {}
     for heading, body in sections:
@@ -90,6 +97,8 @@ def parse_record(path: Path, root: Path) -> list[Chunk]:
         header = f"{title} ({kind}) > {heading}"
         if heading == "Overview" and aliases:
             header += f"\nAlso called: {', '.join(map(str, aliases))}"
+        elif heading != "Overview" and context:
+            header += f"\n{context}"
         pieces = split_long(body)
         for n, piece in enumerate(pieces):
             base = slugify(heading)
