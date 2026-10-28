@@ -1,0 +1,54 @@
+# Retrieval eval for the public sample corpus.
+# Paraphrased questions test meaning-based search; exact-detail questions test keyword search.
+
+- id: bolt-collar
+  question: What does the terrier wear around his neck?
+  expect: [bolt#identity-locks-never-change]
+  tag: paraphrase
+- id: bolt-speaks
+  question: Can Bolt talk?
+  expect: [bolt#identity-locks-never-change]
+- id: bolt-danger
+  question: Is it okay to put the dog in danger for a joke?
+  expect: [bolt#director-rules]
+  tag: paraphrase
+- id: asha-hand
+  question: Which hand does Asha use to cut and tie?
+  expect: [asha#identity-locks-never-change]
+- id: asha-parents
+  question: Where are Asha's mother and father?
+  expect: [asha#family-and-relationships]
+  tag: paraphrase
+- id: asha-phone
+  question: Does Asha have a mobile phone?
+  expect: [asha#director-rules]
+- id: asha-crying
+  question: What does she do when she is upset around other kids?
+  expect: [asha#director-rules]
+  tag: paraphrase
+- id: ravi-flying
+  question: Does the grandfather still fly kites himself?
+  expect: [grandpa-ravi#director-rules]
+  tag: paraphrase
+- id: ravi-wins
+  question: How many times in a row did Nanu win the festival?
+  expect: [grandpa-ravi#personality]
+- id: hill-wind
+  question: Which way does the wind blow on the hill?
+  expect: [windy-hill#fixed-geography]
+- id: hill-tree
+  question: Where exactly is the crooked pine?
+  expect: [windy-hill#fixed-geography, windy-hill#canon-description, windy-hill#overview]
+- id: shed-radio
+  question: What music does the radio in the shed play?
+  expect: [ashas-workshop#canon-description]
+- id: shed-layout
+  question: Which side of the workshop has the bicycles in a wide shot?
+  expect: [ashas-workshop#director-rules]
+- id: kite-ribbons
+  question: How many ribbons are on the kite's tail?
+  expect: [red-kite#director-rules, red-kite#canon-description]
+- id: kite-torn
+  question: Can the red kite be destroyed in an episode?
+  expect: [red-kite#director-rules]
+  tag: paraphrase
